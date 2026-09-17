@@ -1,0 +1,494 @@
+-- ============================================================
+-- PHARMA PATIENT JOURNEY ANALYTICS
+-- SQL Analysis
+-- ============================================================
+
+CREATE DATABASE pharma_analytics;
+USE pharma_analytics;
+
+-- ============================================================
+-- 1. BASIC DATA OVERVIEW
+-- ============================================================
+
+-- Total number of patients
+SELECT COUNT(*) AS total_patients
+FROM patients;
+
+
+-- Number of unique patients
+SELECT COUNT(DISTINCT Patient_ID) AS unique_patients
+FROM patients;
+
+
+-- Display sample records
+SELECT *
+FROM patients
+LIMIT 10;
+
+
+-- ============================================================
+-- 2. PATIENT DEMOGRAPHICS
+-- ============================================================
+
+-- Patient count by sex
+SELECT
+    Sex,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Sex
+ORDER BY patient_count DESC;
+
+
+-- Average age by sex
+SELECT
+    Sex,
+    ROUND(AVG(Age), 2) AS average_age
+FROM patients
+GROUP BY Sex;
+
+
+-- Age distribution
+SELECT
+    CASE
+        WHEN Age < 30 THEN 'Under 30'
+        WHEN Age BETWEEN 30 AND 44 THEN '30-44'
+        WHEN Age BETWEEN 45 AND 59 THEN '45-59'
+        ELSE '60+'
+    END AS age_group,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY age_group
+ORDER BY patient_count DESC;
+
+
+-- ============================================================
+-- 3. DISEASE CHARACTERISTICS
+-- ============================================================
+
+-- Disease severity distribution
+SELECT
+    Disease_Severity,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Disease_Severity
+ORDER BY patient_count DESC;
+
+
+-- Average disease duration by severity
+SELECT
+    Disease_Severity,
+    ROUND(AVG(Disease_Duration_Years), 2) AS avg_disease_duration
+FROM patients
+GROUP BY Disease_Severity
+ORDER BY avg_disease_duration DESC;
+
+
+-- Average HbA1c by disease severity
+SELECT
+    Disease_Severity,
+    ROUND(AVG(HbA1c), 2) AS average_hba1c
+FROM patients
+GROUP BY Disease_Severity
+ORDER BY average_hba1c DESC;
+
+
+-- ============================================================
+-- 4. THERAPY ANALYSIS
+-- ============================================================
+
+-- Number of patients using each current therapy
+SELECT
+    Current_Therapy,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Current_Therapy
+ORDER BY patient_count DESC;
+
+
+-- Previous therapy distribution
+SELECT
+    Previous_Therapy,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Previous_Therapy
+ORDER BY patient_count DESC;
+
+
+-- Current therapy by disease severity
+SELECT
+    Disease_Severity,
+    Current_Therapy,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Disease_Severity, Current_Therapy
+ORDER BY Disease_Severity, patient_count DESC;
+
+
+-- ============================================================
+-- 5. TREATMENT SWITCHING ANALYSIS
+-- ============================================================
+
+-- Total switched vs non-switched patients
+SELECT
+    Switched_Therapy,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Switched_Therapy;
+
+
+-- Treatment switching percentage
+SELECT
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_percentage
+FROM patients;
+
+
+-- Switching rate by current therapy
+SELECT
+    Current_Therapy,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        AS switched_patients,
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_rate
+FROM patients
+GROUP BY Current_Therapy
+ORDER BY switching_rate DESC;
+
+
+-- Switching rate by previous therapy
+SELECT
+    Previous_Therapy,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        AS switched_patients,
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_rate
+FROM patients
+GROUP BY Previous_Therapy
+ORDER BY switching_rate DESC;
+
+
+-- ============================================================
+-- 6. SWITCHING BY PATIENT CHARACTERISTICS
+-- ============================================================
+
+-- Switching rate by sex
+SELECT
+    Sex,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        AS switched_patients,
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_rate
+FROM patients
+GROUP BY Sex;
+
+
+-- Switching rate by disease severity
+SELECT
+    Disease_Severity,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        AS switched_patients,
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_rate
+FROM patients
+GROUP BY Disease_Severity
+ORDER BY switching_rate DESC;
+
+
+-- Switching rate by age group
+SELECT
+    CASE
+        WHEN Age < 30 THEN 'Under 30'
+        WHEN Age BETWEEN 30 AND 44 THEN '30-44'
+        WHEN Age BETWEEN 45 AND 59 THEN '45-59'
+        ELSE '60+'
+    END AS age_group,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        AS switched_patients,
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_rate
+FROM patients
+GROUP BY age_group
+ORDER BY switching_rate DESC;
+
+
+-- ============================================================
+-- 7. CLINICAL FACTORS AND SWITCHING
+-- ============================================================
+
+-- Average HbA1c for switched vs non-switched patients
+SELECT
+    Switched_Therapy,
+    ROUND(AVG(HbA1c), 2) AS average_hba1c
+FROM patients
+GROUP BY Switched_Therapy;
+
+
+-- Average BMI for switched vs non-switched patients
+SELECT
+    Switched_Therapy,
+    ROUND(AVG(BMI), 2) AS average_bmi
+FROM patients
+GROUP BY Switched_Therapy;
+
+
+-- Average medication adherence for switched vs non-switched patients
+SELECT
+    Switched_Therapy,
+    ROUND(AVG(Medication_Adherence_Pct), 2)
+        AS average_adherence
+FROM patients
+GROUP BY Switched_Therapy;
+
+
+-- Average treatment duration for switched vs non-switched patients
+SELECT
+    Switched_Therapy,
+    ROUND(AVG(Treatment_Duration_Days), 2)
+        AS average_treatment_duration
+FROM patients
+GROUP BY Switched_Therapy;
+
+
+-- Average treatment cost for switched vs non-switched patients
+SELECT
+    Switched_Therapy,
+    ROUND(AVG(Treatment_Cost_Index), 2)
+        AS average_treatment_cost
+FROM patients
+GROUP BY Switched_Therapy;
+
+
+-- ============================================================
+-- 8. ADVERSE EVENTS AND SWITCHING
+-- ============================================================
+
+-- Adverse event distribution
+SELECT
+    Adverse_Event,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Adverse_Event
+ORDER BY patient_count DESC;
+
+
+-- Switching rate by adverse event
+SELECT
+    Adverse_Event,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        AS switched_patients,
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_rate
+FROM patients
+GROUP BY Adverse_Event
+ORDER BY switching_rate DESC;
+
+
+-- ============================================================
+-- 9. TREATMENT OUTCOMES
+-- ============================================================
+
+-- Treatment outcome distribution
+SELECT
+    Treatment_Outcome,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Treatment_Outcome
+ORDER BY patient_count DESC;
+
+
+-- Treatment outcomes by switching status
+SELECT
+    Switched_Therapy,
+    Treatment_Outcome,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Switched_Therapy, Treatment_Outcome
+ORDER BY Switched_Therapy, patient_count DESC;
+
+
+-- Outcome distribution within switched patients
+SELECT
+    Treatment_Outcome,
+    COUNT(*) AS patient_count,
+    ROUND(
+        COUNT(*) * 100.0 /
+        (SELECT COUNT(*)
+         FROM patients
+         WHERE Switched_Therapy = 1),
+        2
+    ) AS percentage
+FROM patients
+WHERE Switched_Therapy = 1
+GROUP BY Treatment_Outcome
+ORDER BY percentage DESC;
+
+
+-- ============================================================
+-- 10. TREATMENT DISCONTINUATION
+-- ============================================================
+
+-- Overall discontinuation rate
+SELECT
+    ROUND(
+        SUM(CASE WHEN Discontinued_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS discontinuation_rate
+FROM patients;
+
+
+-- Discontinuation by current therapy
+SELECT
+    Current_Therapy,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Discontinued_Therapy = 1 THEN 1 ELSE 0 END)
+        AS discontinued_patients,
+    ROUND(
+        SUM(CASE WHEN Discontinued_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS discontinuation_rate
+FROM patients
+GROUP BY Current_Therapy
+ORDER BY discontinuation_rate DESC;
+
+
+-- ============================================================
+-- 11. TREATMENT SWITCHING AND DISCONTINUATION
+-- ============================================================
+
+SELECT
+    Switched_Therapy,
+    Discontinued_Therapy,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Switched_Therapy, Discontinued_Therapy
+ORDER BY Switched_Therapy, Discontinued_Therapy;
+
+
+-- ============================================================
+-- 12. PATIENT SEGMENTATION
+-- ============================================================
+
+-- Number of patients in each segment
+SELECT
+    Patient_Segment,
+    COUNT(*) AS patient_count
+FROM patients
+GROUP BY Patient_Segment
+ORDER BY Patient_Segment;
+
+
+-- Switching rate by patient segment
+SELECT
+    Patient_Segment,
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        AS switched_patients,
+    ROUND(
+        SUM(CASE WHEN Switched_Therapy = 1 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*),
+        2
+    ) AS switching_rate
+FROM patients
+GROUP BY Patient_Segment
+ORDER BY switching_rate DESC;
+
+
+-- Average patient characteristics by segment
+SELECT
+    Patient_Segment,
+    ROUND(AVG(Age), 2) AS avg_age,
+    ROUND(AVG(HbA1c), 2) AS avg_hba1c,
+    ROUND(AVG(BMI), 2) AS avg_bmi,
+    ROUND(AVG(Medication_Adherence_Pct), 2)
+        AS avg_adherence,
+    ROUND(AVG(Treatment_Cost_Index), 2)
+        AS avg_treatment_cost
+FROM patients
+GROUP BY Patient_Segment
+ORDER BY Patient_Segment;
+
+
+-- ============================================================
+-- 13. HIGH-RISK PATIENT IDENTIFICATION
+-- ============================================================
+
+-- Patients with high HbA1c and low medication adherence
+SELECT
+    Patient_ID,
+    Age,
+    HbA1c,
+    Medication_Adherence_Pct,
+    Current_Therapy,
+    Switched_Therapy
+FROM patients
+WHERE HbA1c >= 8
+  AND Medication_Adherence_Pct < 70
+ORDER BY HbA1c DESC;
+
+
+-- Patients with adverse events who switched therapy
+SELECT
+    Patient_ID,
+    Current_Therapy,
+    Adverse_Event,
+    Treatment_Duration_Days,
+    Switched_Therapy
+FROM patients
+WHERE Adverse_Event <> 'None'
+  AND Switched_Therapy = 1
+ORDER BY Treatment_Duration_Days DESC;
+
+
+-- ============================================================
+-- 14. COMBINED PATIENT RISK ANALYSIS
+-- ============================================================
+
+SELECT
+    Patient_ID,
+    Age,
+    Disease_Severity,
+    HbA1c,
+    Medication_Adherence_Pct,
+    Adverse_Event,
+    Treatment_Cost_Index,
+    Switched_Therapy
+FROM patients
+WHERE
+    HbA1c >= 8
+    AND Medication_Adherence_Pct < 70
+    AND Switched_Therapy = 1
+ORDER BY HbA1c DESC;
+
+
+-- ============================================================
+-- END OF SQL ANALYSIS
+-- ============================================================
